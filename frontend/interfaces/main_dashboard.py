@@ -143,8 +143,10 @@ class MainDashboard(ctk.CTk):
 
     def show_users_view(self):
         self.clear_content()
-        ctk.CTkLabel(self.content_area, text="Gestión y Control de Usuarios del Sistema", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
-        # Aquí se integrará users_view.py
+        # Importamos e instanciamos la vista de usuarios dentro del content_area
+        from frontend.interfaces.users_view import UsersView
+        users_view = UsersView(parent=self.content_area, role=self.role)
+        users_view.pack(fill="both", expand=True)
 
     def show_reports_view(self):
         self.clear_content()
