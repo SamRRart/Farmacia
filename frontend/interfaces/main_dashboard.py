@@ -123,8 +123,9 @@ class MainDashboard(ctk.CTk):
 
     def show_sales_view(self):
         self.clear_content()
-        ctk.CTkLabel(self.content_area, text="Módulo de Ventas / Punto de Venta (POS)", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
-        # Aquí se integrará posteriormente sales_view.py
+        from frontend.interfaces.sales_view import SalesView
+        sales_view = SalesView(parent=self.content_area, role=self.role)
+        sales_view.pack(fill="both", expand=True)
 
     def show_clients_view(self):
         self.clear_content()
