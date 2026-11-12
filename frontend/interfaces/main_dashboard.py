@@ -133,8 +133,9 @@ class MainDashboard(ctk.CTk):
 
     def show_medicines_view(self):
         self.clear_content()
-        ctk.CTkLabel(self.content_area, text="Catálogo y Gestión de Medicamentos", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
-        # Aquí se integrará medicines_view.py
+        from frontend.interfaces.medicines_view import MedicinesView
+        medicines_view = MedicinesView(parent=self.content_area, role=self.role)
+        medicines_view.pack(fill="both", expand=True)
 
     def show_purchases_view(self):
         self.clear_content()
