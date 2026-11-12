@@ -128,8 +128,9 @@ class MainDashboard(ctk.CTk):
 
     def show_clients_view(self):
         self.clear_content()
-        ctk.CTkLabel(self.content_area, text="Control de Clientes y Acumulación de Puntos", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
-        # Aquí se integrará clients_view.py
+        from frontend.interfaces.clients_view import ClientsView
+        clients_view = ClientsView(parent=self.content_area, role=self.role)
+        clients_view.pack(fill="both", expand=True)
 
     def show_medicines_view(self):
         self.clear_content()
