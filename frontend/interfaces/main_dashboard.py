@@ -148,7 +148,9 @@ class MainDashboard(ctk.CTk):
 
     def show_reports_view(self):
         self.clear_content()
-        ctk.CTkLabel(self.content_area, text="Generación de Reportes Gerenciales y Facturas", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
+        from frontend.interfaces.reports_view import ReportsView
+        reports_view = ReportsView(parent=self.content_area, role=self.role)
+        reports_view.pack(fill="both", expand=True)
 
     def logout(self):
         if messagebox.askyesno("Cerrar Sesión", "¿Está seguro de que desea salir del sistema?"):
