@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox, ttk
+from backend.services.client_service import get_all_clients, create_client
 
 class ClientsView(ctk.CTkFrame):
     def __init__(self, parent, role):
@@ -102,15 +103,14 @@ class ClientsView(ctk.CTkFrame):
         # Cargar datos simulados (corresponden a la tabla Clientes en PostgreSQL)
         self.load_mock_clients()
 
-    def load_mock_clients(self):
-        """Simula la carga de clientes con puntos acumulados."""
-        mock_data = [
-            (1, "Juan Pérez Gómez", "3312345678", "PEGJ900101XYZ", "juan.perez@gmail.com", 30),
-            (2, "María López Ruiz", "3387654321", "LORM850512ABC", "maria.lopez@yahoo.com", 50), # Alcanza los 50 puntos (aplica descuento)
-            (3, "Carlos Sánchez", "3398765432", "SACC951020DEF", "carlos.s@hotmail.com", 10)
-        ]
-        for row in mock_data:
-            self.tree.insert("", "end", values=row)
+    def load_clients_data(self):
+        """Obtiene los clientes del backend y los muestra en la interfaz gráfica."""
+        clients = get_all_clients()
+        # Itera sobre 'clients' para poblar tu tabla visual (ej. Treeview o CTkTable)
+        for client in clients:
+            id_cliente, nombre, telefono, rfc, correo, fecha_nacimiento, puntos_acumulados = client
+            # Inserta los datos en la tabla de la interfaz...
+            self.tree.insert("", "end", values=(id_cliente, nombre, telefono, rfc, correo, puntos_acumulados))
 
     def save_client(self):
         nombre = self.entry_nombre.get().strip()
