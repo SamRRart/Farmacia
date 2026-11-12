@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
+from backend.services.user_service import authenticate_db_user
 
 # Configuración global de CustomTkinter
 ctk.set_appearance_mode("System")  # "System", "Dark", "Light"
@@ -99,16 +100,9 @@ class LoginWindow(ctk.CTk):
             messagebox.showerror("Error de Autenticación", "Usuario o contraseña incorrectos.")
 
     def authenticate_user(self, username, password):
-        # Simulación temporal de usuarios por rol para pruebas en la rama feature/frontend-login
-        mock_users = {
-            "admin": {"pass": "admin123", "role": "Admin"},
-            "gerente": {"pass": "gerente123", "role": "Gerente"},
-            "encargado": {"pass": "encargado123", "role": "Encargado"}
-        }
-
-        if username in mock_users and mock_users[username]["pass"] == password:
-            return mock_users[username]["role"]
-        return None
+        """Consulta la base de datos real a través del servicio."""
+        role = authenticate_db_user(username, password)
+        return role
 
 if __name__ == "__main__":
     app = LoginWindow(on_login_success=lambda r: print(f"Iniciado como: {r}"))
