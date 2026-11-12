@@ -138,8 +138,9 @@ class MainDashboard(ctk.CTk):
 
     def show_purchases_view(self):
         self.clear_content()
-        ctk.CTkLabel(self.content_area, text="Módulo de Compras a Proveedores y Actualización de Stock", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
-        # Aquí se integrará purchases_view.py
+        from frontend.interfaces.purchases_view import PurchasesView
+        purchases_view = PurchasesView(parent=self.content_area, role=self.role)
+        purchases_view.pack(fill="both", expand=True)
 
     def show_users_view(self):
         self.clear_content()
