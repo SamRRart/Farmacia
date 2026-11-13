@@ -1,135 +1,179 @@
 import customtkinter as ctk
-from tkinter import messagebox, ttk
-from backend.services.client_service import get_all_clients, create_client
+from backend.services.client_service import get_all_clients, create_client, search_clients
 
 class ClientsView(ctk.CTkFrame):
-    def __init__(self, parent, role):
-        super().__init__(parent, fg_color="transparent")
+    def __init__(self, parent, role=None, **kwargs):
+        super().__init__(parent, **kwargs)
         self.role = role
-
-        # Configuración del diseño interno (Grid)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # 1. Título del Módulo
+        
+        # Ocupar todo el espacio principal del dashboard
+        self.pack(fill="both", expand=True)
+        
+        # Título superior de la vista
         self.title_label = ctk.CTkLabel(
             self, 
-            text="Control de Clientes y Acumulación de Puntos", 
-            font=ctk.CTkFont(size=20, weight="bold")
+            text="Catálogo y Gestión de Clientes", 
+            font=("Arial", 20, "bold")
         )
-        self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="w")
+        self.title_label.pack(anchor="w", padx=20, pady=(15, 10))
 
-        # 2. Contenedor principal dividido (Formulario a la izquierda / Tabla y búsqueda a la derecha)
-        self.main_container = ctk.CTkFrame(self, fg_color="transparent")
-        self.main_container.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
-        self.main_container.grid_columnconfigure(1, weight=1)
-        self.main_container.grid_rowconfigure(0, weight=1)
-
-        # --- Panel Izquierdo: Formulario de Registro de Clientes ---
-        self.form_frame = ctk.CTkFrame(self.main_container, width=320, corner_radius=10)
-        self.form_frame.grid(row=0, column=0, padx=(0, 15), pady=0, sticky="nsew")
+        # Contenedor principal dividido en dos columnas (Izquierda: Formulario, Derecha: Tabla y Buscador)
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
-        self.setup_form()
-
-        # --- Panel Derecho: Tabla y Búsqueda ---
-        self.right_panel = ctk.CTkFrame(self.main_container, corner_radius=10, fg_color="transparent")
-        self.right_panel.grid(row=0, column=1, padx=0, pady=0, sticky="nsew")
-        self.right_panel.grid_rowconfigure(1, weight=1)
-        self.right_panel.grid_columnconfigure(0, weight=1)
-
-        self.setup_search_bar()
-        self.setup_table()
-
-    def setup_form(self):
-        """Configura los campos del formulario para registrar clientes y asignar puntos/RFC."""
-        lbl_form = ctk.CTkLabel(self.form_frame, text="Registrar / Editar Cliente", font=ctk.CTkFont(size=16, weight="bold"))
-        lbl_form.pack(padx=20, pady=(20, 15), anchor="w")
-
-        # Nombre
-        self.entry_nombre = ctk.CTkEntry(self.form_frame, placeholder_text="Nombre completo", width=260, height=40)
-        self.entry_nombre.pack(padx=20, pady=8)
-
-        # Teléfono
-        self.entry_telefono = ctk.CTkEntry(self.form_frame, placeholder_text="Teléfono", width=260, height=40)
-        self.entry_telefono.pack(padx=20, pady=8)
-
-        # RFC (Clave para asignación de puntos y facturación)
-        self.entry_rfc = ctk.CTkEntry(self.form_frame, placeholder_text="RFC (13 caracteres)", width=260, height=40)
-        self.entry_rfc.pack(padx=20, pady=8)
-
-        # Correo (Para envío de facturas en PDF)
-        self.entry_correo = ctk.CTkEntry(self.form_frame, placeholder_text="Correo electrónico", width=260, height=40)
-        self.entry_correo.pack(padx=20, pady=8)
-
-        # Fecha de Nacimiento
-        self.entry_fnac = ctk.CTkEntry(self.form_frame, placeholder_text="Fecha Nacimiento (YYYY-MM-DD)", width=260, height=40)
-        self.entry_fnac.pack(padx=20, pady=8)
-
-        # Botón Guardar Cliente
-        self.btn_guardar = ctk.CTkButton(
-            self.form_frame, text="Guardar Cliente", fg_color="#27AE60", hover_color="#219653",
-            command=self.save_client, width=260, height=40
+        # --- PANEL IZQUIERDO: Gestión de Cliente (Formulario) ---
+        left_panel = ctk.CTkFrame(main_container, width=320, corner_radius=8)
+        left_panel.pack(side="left", fill="y", padx=(0, 15), pady=0)
+        left_panel.pack_propagate(False) 
+        
+        form_title = ctk.CTkLabel(left_panel, text="Gestión de Cliente", font=("Arial", 16, "bold"))
+        form_title.pack(anchor="w", padx=15, pady=(15, 10))
+        
+        # Campos de entrada
+        self.entry_nombre = ctk.CTkEntry(left_panel, placeholder_text="Nombre completo")
+        self.entry_nombre.pack(fill="x", padx=15, pady=8)
+        
+        self.entry_telefono = ctk.CTkEntry(left_panel, placeholder_text="Teléfono")
+        self.entry_telefono.pack(fill="x", padx=15, pady=8)
+        
+        self.entry_rfc = ctk.CTkEntry(left_panel, placeholder_text="RFC")
+        self.entry_rfc.pack(fill="x", padx=15, pady=8)
+        
+        self.entry_correo = ctk.CTkEntry(left_panel, placeholder_text="Correo electrónico")
+        self.entry_correo.pack(fill="x", padx=15, pady=8)
+        
+        self.entry_naci = ctk.CTkEntry(left_panel, placeholder_text="Fecha Nac. (YYYY-MM-DD)")
+        self.entry_naci.pack(fill="x", padx=15, pady=8)
+        
+        # Botón verde de guardar
+        self.btn_save = ctk.CTkButton(
+            left_panel, 
+            text="Guardar Cliente", 
+            fg_color="#28a745", 
+            hover_color="#218838",
+            command=self.save_client
         )
-        self.btn_guardar.pack(padx=20, pady=(20, 20))
+        self.btn_save.pack(side="bottom", fill="x", padx=15, pady=15)
 
-    def setup_search_bar(self):
-        """Barra superior de búsqueda por RFC o Nombre."""
-        self.search_frame = ctk.CTkFrame(self.right_panel, fg_color="transparent")
-        self.search_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
-
-        self.entry_search = ctk.CTkEntry(self.search_frame, placeholder_text="Buscar por Nombre o RFC...", width=300, height=35)
-        self.entry_search.pack(side="left", padx=(0, 10))
-
-        self.btn_search = ctk.CTkButton(self.search_frame, text="Buscar", width=100, height=35, command=self.search_client)
-        self.btn_search.pack(side="left")
-
-    def setup_table(self):
-        """Configura la tabla para visualizar clientes y sus puntos acumulados."""
-        table_container = ctk.CTkFrame(self.right_panel)
-        table_container.grid(row=1, column=0, sticky="nsew")
-        table_container.grid_rowconfigure(0, weight=1)
-        table_container.grid_columnconfigure(0, weight=1)
-
-        columns = ("ID", "Nombre", "Teléfono", "RFC", "Correo", "Puntos")
-        self.tree = ttk.Treeview(table_container, columns=columns, show="headings", height=15)
+        # --- PANEL DERECHO: Buscador y Tabla de Registros ---
+        right_panel = ctk.CTkFrame(main_container, fg_color="transparent")
+        right_panel.pack(side="right", fill="both", expand=True)
         
-        widths = [40, 140, 90, 110, 160, 70]
-        for col, w in zip(columns, widths):
-            self.tree.heading(col, text=col)
-            self.tree.column(col, width=w, anchor="center")
+        # Barra superior de búsqueda
+        search_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
+        search_frame.pack(fill="x", pady=(0, 10))
+        
+        self.entry_search = ctk.CTkEntry(
+            search_frame, 
+            placeholder_text="Buscar cliente por nombre, RFC o correo...", 
+            height=35
+        )
+        self.entry_search.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.entry_search.bind("<Return>", lambda event: self.perform_search()) # Permitir buscar con Enter
+        
+        self.btn_search = ctk.CTkButton(
+            search_frame, 
+            text="Buscar", 
+            width=100, 
+            height=35,
+            command=self.perform_search
+        )
+        self.btn_search.pack(side="right")
 
-        self.tree.pack(fill="both", expand=True, padx=10, pady=10)
+        # Contenedor estilo tarjeta blanca para la tabla
+        table_card = ctk.CTkFrame(right_panel, fg_color=("white", "gray15"), corner_radius=8)
+        table_card.pack(fill="both", expand=True)
+        
+        # Fila de Encabezados de la tabla
+        headers_frame = ctk.CTkFrame(table_card, fg_color=("gray90", "gray25"), corner_radius=4)
+        headers_frame.pack(fill="x", padx=10, pady=10)
+        
+        columns_config = [
+            ("ID", 40), 
+            ("Nombre", 180), 
+            ("Teléfono", 90), 
+            ("RFC", 110), 
+            ("Correo", 170), 
+            ("Puntos", 60)
+        ]
+        
+        for text, width in columns_config:
+            lbl = ctk.CTkLabel(headers_frame, text=text, font=("Arial", 11, "bold"), width=width, anchor="w")
+            lbl.pack(side="left", padx=4, pady=6)
 
-        # Cargar datos simulados (corresponden a la tabla Clientes en PostgreSQL)
-        self.load_mock_clients()
+        # Área con scroll para las filas de datos
+        self.scroll_table = ctk.CTkScrollableFrame(table_card, fg_color="transparent")
+        self.scroll_table.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        
+        # Cargar los registros iniciales
+        self.load_table_data()
 
-    def load_clients_data(self):
-        """Obtiene los clientes del backend y los muestra en la interfaz gráfica."""
+    def load_table_data(self):
+        """Consulta el backend y pinta todos los clientes en la tabla."""
         clients = get_all_clients()
-        # Itera sobre 'clients' para poblar tu tabla visual (ej. Treeview o CTkTable)
+        self.populate_table(clients)
+
+    def perform_search(self):
+        """Realiza la búsqueda filtrada basada en el texto ingresado."""
+        term = self.entry_search.get().strip()
+        if not term:
+            self.load_table_data()
+            return
+            
+        clients = search_clients(term)
+        self.populate_table(clients)
+
+    def populate_table(self, clients):
+        """Método auxiliar para limpiar y rellenar la tabla con una lista de clientes."""
+        for widget in self.scroll_table.winfo_children():
+            widget.destroy()
+            
+        if not clients:
+            empty_lbl = ctk.CTkLabel(self.scroll_table, text="No se encontraron registros.", text_color="gray")
+            empty_lbl.pack(pady=20)
+            return
+            
         for client in clients:
             id_cliente, nombre, telefono, rfc, correo, fecha_nacimiento, puntos_acumulados = client
-            # Inserta los datos en la tabla de la interfaz...
-            self.tree.insert("", "end", values=(id_cliente, nombre, telefono, rfc, correo, puntos_acumulados))
+            
+            row = ctk.CTkFrame(self.scroll_table, fg_color="transparent")
+            row.pack(fill="x", pady=2)
+            
+            row_data = [
+                (str(id_cliente), 40),
+                (str(nombre), 180),
+                (str(telefono), 90),
+                (str(rfc), 110),
+                (str(correo), 170),
+                (str(puntos_acumulados), 60)
+            ]
+            
+            for text, width in row_data:
+                cell = ctk.CTkLabel(row, text=text, font=("Arial", 11), width=width, anchor="w")
+                cell.pack(side="left", padx=4, pady=4)
 
     def save_client(self):
+        """Captura los datos del formulario izquierdo y los guarda en la base de datos."""
         nombre = self.entry_nombre.get().strip()
+        telefono = self.entry_telefono.get().strip()
         rfc = self.entry_rfc.get().strip()
+        correo = self.entry_correo.get().strip()
+        fecha_naci = self.entry_naci.get().strip()
         
-        if not nombre or not rfc:
-            messagebox.showerror("Error", "El nombre y el RFC son obligatorios para el control de puntos.")
+        if not nombre or not telefono:
+            print("[Advertencia]: Nombre y teléfono son obligatorios.")
             return
-
-        messagebox.showinfo("Éxito", f"Cliente {nombre} registrado correctamente.")
-        self.clear_form()
-
-    def search_client(self):
-        query = self.entry_search.get().strip()
-        messagebox.showinfo("Búsqueda", f"Buscando cliente: {query}")
-
-    def clear_form(self):
-        self.entry_nombre.delete(0, 'end')
-        self.entry_telefono.delete(0, 'end')
-        self.entry_rfc.delete(0, 'end')
-        self.entry_correo.delete(0, 'end')
-        self.entry_fnac.delete(0, 'end')
+            
+        success = create_client(nombre, telefono, rfc, correo, fecha_naci)
+        if success:
+            print("[Éxito]: Cliente guardado correctamente.")
+            # Limpiar campos
+            self.entry_nombre.delete(0, 'end')
+            self.entry_telefono.delete(0, 'end')
+            self.entry_rfc.delete(0, 'end')
+            self.entry_correo.delete(0, 'end')
+            self.entry_naci.delete(0, 'end')
+            # Recargar la tabla
+            self.load_table_data()
+        else:
+            print("[Error]: No se pudo registrar el cliente.")
