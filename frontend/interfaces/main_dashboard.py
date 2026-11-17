@@ -71,7 +71,7 @@ class MainDashboard(ctk.CTk):
         # Medicamentos / Productos (Búsqueda o CRUD completo)
         if self.role in ["Admin", "Gerente", "Encargado"]:
             self.btn_medicines = ctk.CTkButton(
-                self.sidebar_frame, text="💊 Medicamentos", command=self.show_medicines_view
+                self.sidebar_frame, text="💊 Productos", command=self.show_medicines_view
             )
             self.btn_medicines.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1
