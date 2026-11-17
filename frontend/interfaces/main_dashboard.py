@@ -2,10 +2,11 @@ import customtkinter as ctk
 from tkinter import messagebox
 
 class MainDashboard(ctk.CTk):
-    def __init__(self, role, username="Usuario"):
+    def __init__(self, role, username="Usuario", user_id=None):
         super().__init__()
         self.role = role
         self.username = username
+        self.user_id = user_id
 
         # Configuración de la ventana principal
         self.title(f"Farmacia CUCEI - Panel Principal [{self.role}]")

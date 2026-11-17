@@ -7,12 +7,21 @@ from backend.database.connection import test_connection
 from frontend.interfaces.login_window import LoginWindow
 from frontend.interfaces.main_dashboard import MainDashboard
 
-def handle_successful_login(role):
+def handle_successful_login(user_info):
     """Función que se ejecuta tras una autenticación exitosa."""
-    print(f"Acceso concedido. Abriendo panel para el rol: {role}")
+    if isinstance(user_info, dict):
+        role = user_info.get("perfil", "Encargado")
+        username = user_info.get("nombre", "Usuario")
+        user_id = user_info.get("id_usuario")
+    else:
+        role = str(user_info)
+        username = "Usuario"
+        user_id = None
+
+    print(f"Acceso concedido. Abriendo panel para: {username} [{role}]")
     
-    # Instanciamos el Dashboard Principal pasando el rol obtenido
-    dashboard = MainDashboard(role=role)
+    # Instanciamos el Dashboard Principal pasando rol, nombre y user_id
+    dashboard = MainDashboard(role=role, username=username, user_id=user_id)
     dashboard.mainloop()
 
 def main():

@@ -89,13 +89,14 @@ class LoginWindow(ctk.CTk):
             messagebox.showerror("Campos vacíos", "Por favor, ingrese usuario y contraseña.")
             return
 
-        # TODO: Aquí se reemplazará por la consulta real al servicio de autenticación y PostgreSQL
-        role = self.authenticate_user(username, password)
+        user_info = self.authenticate_user(username, password)
 
-        if role:
-            messagebox.showinfo("Acceso Exitoso", f"Bienvenido al sistema.\nRol detectado: {role}")
+        if user_info:
+            role = user_info["perfil"] if isinstance(user_info, dict) else str(user_info)
+            nombre = user_info["nombre"] if isinstance(user_info, dict) else username
+            messagebox.showinfo("Acceso Exitoso", f"Bienvenido al sistema, {nombre}.\nRol: {role}")
             self.destroy()
-            self.on_login_success(role)
+            self.on_login_success(user_info)
         else:
             messagebox.showerror("Error de Autenticación", "Usuario o contraseña incorrectos.")
 
