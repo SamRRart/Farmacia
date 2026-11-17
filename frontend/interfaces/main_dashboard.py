@@ -143,7 +143,7 @@ class MainDashboard(ctk.CTk):
     def show_purchases_view(self):
         self.clear_content()
         from frontend.interfaces.purchases_view import PurchasesView
-        purchases_view = PurchasesView(parent=self.content_area, role=self.role)
+        purchases_view = PurchasesView(parent=self.content_area, role=self.role, user_id=self.user_id)
         purchases_view.pack(fill="both", expand=True)
 
     def show_users_view(self):
