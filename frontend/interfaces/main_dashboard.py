@@ -125,7 +125,7 @@ class MainDashboard(ctk.CTk):
     def show_sales_view(self):
         self.clear_content()
         from frontend.interfaces.sales_view import SalesView
-        sales_view = SalesView(parent=self.content_area, role=self.role)
+        sales_view = SalesView(parent=self.content_area, role=self.role, user_id=self.user_id)
         sales_view.pack(fill="both", expand=True)
 
     def show_clients_view(self):

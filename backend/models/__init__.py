@@ -2,5 +2,16 @@ from backend.models.user import Usuario
 from backend.models.product import Producto
 from backend.models.provider import Proveedor
 from backend.models.purchase import Compra, DetalleCompra
+from backend.models.client import Cliente
+from backend.models.sale import Venta, DetalleVenta
 
-__all__ = ["Usuario", "Producto", "Proveedor", "Compra", "DetalleCompra"]
+__all__ = [
+    "Usuario", 
+    "Producto", 
+    "Proveedor", 
+    "Compra", 
+    "DetalleCompra", 
+    "Cliente", 
+    "Venta", 
+    "DetalleVenta"
+]
