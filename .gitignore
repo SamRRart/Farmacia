@@ -33,5 +33,10 @@ package-lock.json
 .DS_Store
 Thumbs.db
 
+# Archivos generados por el sistema
+facturas/
+reportes/
+*.pdf
+
 # Logs
 *.log

@@ -5,6 +5,7 @@ from backend.models.purchase import Compra, DetalleCompra
 from backend.models.client import Cliente
 from backend.models.sale import Venta, DetalleVenta
 from backend.models.invoice import Factura
+from backend.models.reports import GestorReportes
 
 __all__ = [
     "Usuario", 
@@ -15,5 +16,6 @@ __all__ = [
     "Cliente", 
     "Venta", 
     "DetalleVenta",
-    "Factura"
+    "Factura",
+    "GestorReportes"
 ]
