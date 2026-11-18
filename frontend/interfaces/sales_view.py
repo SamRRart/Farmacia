@@ -7,6 +7,9 @@ from backend.services.sale_service import (
     calculate_sale_summary,
     process_sale
 )
+from backend.services.connectivity_service import check_internet_connection
+from backend.services.invoice_service import generate_invoice_pdf
+from backend.services.mail_service import send_invoice_email
 
 class SalesView(ctk.CTkFrame):
     """
@@ -484,6 +487,14 @@ class SalesView(ctk.CTkFrame):
 
     def complete_sale(self):
         """Valida y procesa la venta en la base de datos."""
+        # Verificacion obligatoria de conexion a internet
+        if not check_internet_connection():
+            messagebox.showerror(
+                "Sin Conexion a Internet",
+                "El sistema requiere conexion activa a internet para registrar operaciones y notificaciones. Compruebe su red."
+            )
+            return
+
         if not self.cart_items:
             messagebox.showwarning("Carrito Vacio", "Agregue al menos un producto al carrito de compras.")
             return
@@ -521,6 +532,9 @@ class SalesView(ctk.CTkFrame):
         if not messagebox.askyesno("Confirmar Cobro", f"¿Desea confirmar la venta por un total de ${total:,.2f} MXN ({metodo})?"):
             return
 
+        # Copia de los datos del cliente para facturacion antes de limpiar
+        client_snapshot = dict(self.current_client)
+
         success, msg, id_venta, res = process_sale(
             cart_items=self.cart_items,
             id_cliente=self.current_client["id_cliente"],
@@ -532,7 +546,19 @@ class SalesView(ctk.CTkFrame):
 
         if success:
             if req_factura:
-                msg += "\n\n(Factura solicitada: Se generara y enviara en el modulo de Facturacion)."
+                pdf_ok, pdf_msg, pdf_path = generate_invoice_pdf(id_venta)
+                if pdf_ok:
+                    client_email = client_snapshot.get("correo", "")
+                    mail_ok, mail_msg = send_invoice_email(
+                        to_email=client_email,
+                        client_name=client_snapshot.get("nombre", ""),
+                        rfc=client_snapshot.get("rfc", ""),
+                        pdf_path=pdf_path,
+                        total_amount=total
+                    )
+                    msg += f"\n\nFacturacion y Envio:\n- {pdf_msg}\n- {mail_msg}"
+                else:
+                    msg += f"\n\nFacturacion:\n- Error al generar PDF: {pdf_msg}"
 
             messagebox.showinfo("Venta Finalizada con Exito", msg)
 

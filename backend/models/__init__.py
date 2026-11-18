@@ -4,6 +4,7 @@ from backend.models.provider import Proveedor
 from backend.models.purchase import Compra, DetalleCompra
 from backend.models.client import Cliente
 from backend.models.sale import Venta, DetalleVenta
+from backend.models.invoice import Factura
 
 __all__ = [
     "Usuario", 
@@ -13,5 +14,6 @@ __all__ = [
     "DetalleCompra", 
     "Cliente", 
     "Venta", 
-    "DetalleVenta"
+    "DetalleVenta",
+    "Factura"
 ]

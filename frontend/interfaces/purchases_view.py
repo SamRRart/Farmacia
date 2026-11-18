@@ -7,6 +7,7 @@ from backend.services.purchase_service import (
     get_purchase_details,
     receive_purchase
 )
+from backend.services.connectivity_service import check_internet_connection
 
 class PurchasesView(ctk.CTkFrame):
     """
@@ -346,6 +347,14 @@ class PurchasesView(ctk.CTkFrame):
 
     def submit_restock_orders(self):
         """Envia la solicitud de restock aplicando agrupacion automatica por proveedor."""
+        # Verificacion obligatoria de conexion a internet
+        if not check_internet_connection():
+            messagebox.showerror(
+                "Sin Conexion a Internet",
+                "El sistema requiere conexion activa a internet para emitir ordenes de compra y notificar a proveedores."
+            )
+            return
+
         if not self.cart_items:
             messagebox.showwarning("Lista vacia", "Agregue al menos un producto a la orden de restock.")
             return

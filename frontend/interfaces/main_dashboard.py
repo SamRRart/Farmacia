@@ -1,5 +1,7 @@
+import os
 import customtkinter as ctk
 from tkinter import messagebox
+from PIL import Image
 
 class MainDashboard(ctk.CTk):
     def __init__(self, role, username="Usuario", user_id=None):
@@ -32,13 +34,26 @@ class MainDashboard(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(8, weight=1)  # Empujar elementos hacia arriba
 
+        # Logotipo institucional si existe
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../assets/logo.png"))
+        start_row = 0
+        if os.path.exists(logo_path):
+            try:
+                pil_logo = Image.open(logo_path)
+                self.logo_ctk = ctk.CTkImage(light_image=pil_logo, dark_image=pil_logo, size=(100, 50))
+                self.lbl_logo_img = ctk.CTkLabel(self.sidebar_frame, text="", image=self.logo_ctk)
+                self.lbl_logo_img.grid(row=start_row, column=0, padx=20, pady=(20, 5))
+                start_row += 1
+            except Exception:
+                pass
+
         # Título del Menú
         self.logo_label = ctk.CTkLabel(
             self.sidebar_frame, 
             text="Farmacia CUCEI", 
             font=ctk.CTkFont(size=20, weight="bold")
         )
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 20))
+        self.logo_label.grid(row=start_row, column=0, padx=20, pady=(10, 10))
 
         # Indicador de Rol
         self.role_label = ctk.CTkLabel(
@@ -47,10 +62,10 @@ class MainDashboard(ctk.CTk):
             font=ctk.CTkFont(size=12, slant="italic"),
             text_color="gray"
         )
-        self.role_label.grid(row=1, column=0, padx=20, pady=(0, 20))
+        self.role_label.grid(row=start_row + 1, column=0, padx=20, pady=(0, 20))
 
         # --- BOTONES DINÁMICOS SEGÚN EL ROL ---
-        current_row = 2
+        current_row = start_row + 2
 
         # Ventas (Disponible para Encargado, Gerente y Admin)
         if self.role in ["Admin", "Gerente", "Encargado"]:

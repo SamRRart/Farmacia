@@ -1,5 +1,7 @@
+import os
 import customtkinter as ctk
 from tkinter import messagebox
+from PIL import Image
 from backend.services.user_service import authenticate_db_user
 
 # Configuración global de CustomTkinter
@@ -13,7 +15,7 @@ class LoginWindow(ctk.CTk):
 
         # Configuración de la ventana principal de Login
         self.title("Farmacia CUCEI - Acceso al Sistema")
-        self.geometry("420x520")
+        self.geometry("420x560")
         self.resizable(False, False)
 
         # Centrar ventana en pantalla
@@ -23,14 +25,25 @@ class LoginWindow(ctk.CTk):
         self.frame = ctk.CTkFrame(self, corner_radius=15)
         self.frame.pack(fill="both", expand=True, padx=30, pady=30)
         self.frame.pack_propagate(False)
+
+        # Logotipo institucional si existe
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../assets/logo.png"))
+        if os.path.exists(logo_path):
+            try:
+                pil_logo = Image.open(logo_path)
+                self.logo_ctk = ctk.CTkImage(light_image=pil_logo, dark_image=pil_logo, size=(100, 100))
+                self.lbl_logo_img = ctk.CTkLabel(self.frame, text="", image=self.logo_ctk)
+                self.lbl_logo_img.pack(pady=(15, 0))
+            except Exception:
+                pass
         
         # Título y subtítulo
         self.title_label = ctk.CTkLabel(
             self.frame, 
             text="Farmacia CUCEI", 
-            font=ctk.CTkFont(size=26, weight="bold")
+            font=ctk.CTkFont(size=24, weight="bold")
         )
-        self.title_label.pack(pady=(40, 10))
+        self.title_label.pack(pady=(10, 5))
 
         self.subtitle_label = ctk.CTkLabel(
             self.frame, 
