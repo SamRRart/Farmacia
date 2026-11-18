@@ -25,19 +25,19 @@ from backend.database.connection import get_connection
 USUARIOS = [
     {
         "perfil": "Admin",
-        "nombre": "Administrador Sistema",
+        "nombre": "administrador",
         "correo": "admin@cucei.udg.mx",
         "password": "1234"
     },
     {
         "perfil": "Gerente",
-        "nombre": "Gerente General",
+        "nombre": "gerente",
         "correo": "gerente@cucei.udg.mx",
         "password": "1234"
     },
     {
         "perfil": "Encargado",
-        "nombre": "Encargado Mostrador",
+        "nombre": "encargado",
         "correo": "encargado@cucei.udg.mx",
         "password": "1234"
     },
