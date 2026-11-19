@@ -22,10 +22,21 @@ htmlcov/
 # IDE
 .vscode/
 .idea/
+*.session.sql
+
+# Node / JS
+node_modules/
+package.json
+package-lock.json
 
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Archivos generados por el sistema
+facturas/
+reportes/
+*.pdf
 
 # Logs
 *.log
