@@ -179,7 +179,8 @@ class MainDashboard(ctk.CTk):
             self.destroy()
             # Opcional: Volver a abrir la ventana de login
             from frontend.interfaces.login_window import LoginWindow
-            app = LoginWindow(on_login_success=lambda r: MainDashboard(r).mainloop())
+            from main import handle_successful_login
+            app = LoginWindow(on_login_success=handle_successful_login)
             app.mainloop()
 
 if __name__ == "__main__":
