@@ -2,8 +2,10 @@ import customtkinter as ctk
 from tkinter import messagebox, ttk
 from backend.services.product_service import (
     get_all_products,
+    get_providers_list,
     search_products,
     create_product,
+    assign_product_provider,
     delete_product
 )
 
@@ -72,6 +74,31 @@ class MedicinesView(ctk.CTkFrame):
         self.combo_categoria = ctk.CTkComboBox(self.form_frame, values=categorias_base, width=260, height=35)
         self.combo_categoria.pack(padx=20, pady=(0, 5))
         self.combo_categoria.set("Medicamento")
+
+        lbl_provider = ctk.CTkLabel(self.form_frame, text="Proveedor:", font=ctk.CTkFont(size=12))
+        lbl_provider.pack(padx=20, pady=(4, 2), anchor="w")
+
+        self.providers_cache = get_providers_list()
+        provider_values = [f"{provider_id} - {name}" for provider_id, name in self.providers_cache]
+        self.combo_provider = ctk.CTkComboBox(
+            self.form_frame,
+            values=provider_values,
+            width=260,
+            height=35
+        )
+        self.combo_provider.pack(padx=20, pady=(0, 5))
+        self.combo_provider.set("")
+
+        self.btn_assign_provider = ctk.CTkButton(
+            self.form_frame,
+            text="Asignar al Producto Seleccionado",
+            fg_color="#5D6D7E",
+            hover_color="#4A5968",
+            command=self.assign_provider_to_selected,
+            width=260,
+            height=34
+        )
+        self.btn_assign_provider.pack(padx=20, pady=(4, 8))
 
         self.entry_pcompra = ctk.CTkEntry(self.form_frame, placeholder_text="Precio Compra ($)", width=260, height=35)
         self.entry_pcompra.pack(padx=20, pady=5)
@@ -212,17 +239,23 @@ class MedicinesView(ctk.CTkFrame):
         stock = self.entry_stock.get().strip()
         es_ctrl = self.var_controlado.get()
         es_alc = self.var_alcohol.get()
+        provider_choice = self.combo_provider.get().strip()
 
         if not nombre:
             messagebox.showerror("Campo requerido", "El nombre del producto es obligatorio.")
             return
 
+        if not provider_choice:
+            messagebox.showerror("Proveedor requerido", "Seleccione un proveedor para el producto.")
+            return
+
         try:
+            id_proveedor = int(provider_choice.split(" - ", 1)[0])
             pc_val = float(p_compra)
             pv_val = float(p_venta)
             stock_val = int(stock)
         except ValueError:
-            messagebox.showerror("Dato invalido", "Los precios y el stock deben ser numericos.")
+            messagebox.showerror("Dato invalido", "Seleccione un proveedor y verifique los precios y el stock.")
             return
 
         success, msg = create_product(
@@ -233,6 +266,7 @@ class MedicinesView(ctk.CTkFrame):
             stock=stock_val,
             es_controlado=es_ctrl,
             es_alcohol=es_alc,
+            id_proveedor=id_proveedor,
             folio=folio if folio else None,
             creator_role=self.role
         )
@@ -243,6 +277,31 @@ class MedicinesView(ctk.CTkFrame):
             self.load_products_from_db()
         else:
             messagebox.showerror("Error al guardar", msg)
+
+    def assign_provider_to_selected(self):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showwarning("Seleccion requerida", "Seleccione un producto de la tabla.")
+            return
+
+        provider_choice = self.combo_provider.get().strip()
+        try:
+            id_proveedor = int(provider_choice.split(" - ", 1)[0])
+            id_producto = int(self.tree.item(selected[0], "values")[0])
+        except (ValueError, IndexError):
+            messagebox.showerror("Proveedor requerido", "Seleccione un proveedor valido.")
+            return
+
+        success, msg = assign_product_provider(
+            id_producto=id_producto,
+            id_proveedor=id_proveedor,
+            creator_role=self.role
+        )
+        if success:
+            messagebox.showinfo("Proveedor asignado", msg)
+            self.load_products_from_db()
+        else:
+            messagebox.showerror("Error", msg)
 
     def search_product(self):
         """Filtra los productos por el texto ingresado."""

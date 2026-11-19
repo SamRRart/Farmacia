@@ -40,7 +40,7 @@ class MainDashboard(ctk.CTk):
         if os.path.exists(logo_path):
             try:
                 pil_logo = Image.open(logo_path)
-                self.logo_ctk = ctk.CTkImage(light_image=pil_logo, dark_image=pil_logo, size=(100, 50))
+                self.logo_ctk = ctk.CTkImage(light_image=pil_logo, dark_image=pil_logo, size=(100, 100))
                 self.lbl_logo_img = ctk.CTkLabel(self.sidebar_frame, text="", image=self.logo_ctk)
                 self.lbl_logo_img.grid(row=start_row, column=0, padx=20, pady=(20, 5))
                 start_row += 1
@@ -70,7 +70,7 @@ class MainDashboard(ctk.CTk):
         # Ventas (Disponible para Encargado, Gerente y Admin)
         if self.role in ["Admin", "Gerente", "Encargado"]:
             self.btn_sales = ctk.CTkButton(
-                self.sidebar_frame, text="🛒 Ventas / POS", command=self.show_sales_view
+                self.sidebar_frame, text="Ventas / POS", command=self.show_sales_view
             )
             self.btn_sales.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1
@@ -78,7 +78,7 @@ class MainDashboard(ctk.CTk):
         # Clientes (Disponible para todos)
         if self.role in ["Admin", "Gerente", "Encargado"]:
             self.btn_clients = ctk.CTkButton(
-                self.sidebar_frame, text="👥 Clientes y Puntos", command=self.show_clients_view
+                self.sidebar_frame, text="Clientes y Puntos", command=self.show_clients_view
             )
             self.btn_clients.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1
@@ -86,7 +86,7 @@ class MainDashboard(ctk.CTk):
         # Medicamentos / Productos (Búsqueda o CRUD completo)
         if self.role in ["Admin", "Gerente", "Encargado"]:
             self.btn_medicines = ctk.CTkButton(
-                self.sidebar_frame, text="💊 Productos", command=self.show_medicines_view
+                self.sidebar_frame, text="Productos", command=self.show_medicines_view
             )
             self.btn_medicines.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1
@@ -94,7 +94,7 @@ class MainDashboard(ctk.CTk):
         # Compras a Proveedores (Exclusivo Gerente y Admin)
         if self.role in ["Admin", "Gerente"]:
             self.btn_purchases = ctk.CTkButton(
-                self.sidebar_frame, text="📦 Compras Proveedores", command=self.show_purchases_view
+                self.sidebar_frame, text="Compras a Proveedores", command=self.show_purchases_view
             )
             self.btn_purchases.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1
@@ -102,7 +102,7 @@ class MainDashboard(ctk.CTk):
         # Control de Usuarios (Exclusivo Admin y parcialmente Gerente)
         if self.role in ["Admin", "Gerente"]:
             self.btn_users = ctk.CTkButton(
-                self.sidebar_frame, text="🔐 Control de Usuarios", command=self.show_users_view
+                self.sidebar_frame, text="Control de Usuarios", command=self.show_users_view
             )
             self.btn_users.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1
@@ -110,7 +110,7 @@ class MainDashboard(ctk.CTk):
         # Reportes (Exclusivo Gerente y Admin)
         if self.role in ["Admin", "Gerente"]:
             self.btn_reports = ctk.CTkButton(
-                self.sidebar_frame, text="📊 Reportes del Sistema", command=self.show_reports_view
+                self.sidebar_frame, text="Reportes del Sistema", command=self.show_reports_view
             )
             self.btn_reports.grid(row=current_row, column=0, padx=20, pady=10, sticky="ew")
             current_row += 1

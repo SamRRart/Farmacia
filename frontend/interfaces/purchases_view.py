@@ -5,9 +5,11 @@ from backend.services.purchase_service import (
     create_restock_orders,
     get_pending_purchases,
     get_purchase_details,
+    get_purchase_notification_data,
     receive_purchase
 )
 from backend.services.connectivity_service import check_internet_connection
+from backend.services.mail_service import send_restock_order_email
 
 class PurchasesView(ctk.CTkFrame):
     """
@@ -372,7 +374,31 @@ class PurchasesView(ctk.CTkFrame):
         )
 
         if success:
-            messagebox.showinfo("Restock Solicitado", msg)
+            notification_results = []
+            for order_id in created_ids:
+                data_ok, data_msg, notification_data = get_purchase_notification_data(order_id)
+                if not data_ok:
+                    notification_results.append((False, data_msg))
+                    continue
+
+                email_ok, email_msg = send_restock_order_email(**notification_data)
+                notification_results.append(
+                    (email_ok, f"Orden #{order_id}: {email_msg}")
+                )
+
+            notification_summary = "\n".join(message for _, message in notification_results)
+            all_notifications_sent = all(sent for sent, _ in notification_results)
+            if all_notifications_sent:
+                messagebox.showinfo(
+                    "Restock Solicitado",
+                    f"{msg}\n\nNotificaciones por correo:\n{notification_summary}"
+                )
+            else:
+                messagebox.showwarning(
+                    "Restock registrado; notificacion incompleta",
+                    f"{msg}\n\nLa orden ya esta registrada, pero hubo problemas con el correo:\n"
+                    f"{notification_summary}"
+                )
             self.cart_items.clear()
             self.refresh_restock_table()
             self.load_pending_purchases_table()

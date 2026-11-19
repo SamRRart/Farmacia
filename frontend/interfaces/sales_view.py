@@ -408,7 +408,12 @@ class SalesView(ctk.CTkFrame):
             messagebox.showerror("Error", "Ingrese el RFC del cliente para verificar.")
             return
 
-        client = get_client_by_rfc(rfc)
+        try:
+            client = get_client_by_rfc(rfc)
+        except ValueError as error:
+            messagebox.showerror("RFC duplicado", str(error))
+            return
+
         if client:
             self.current_client = client
             pts = client["puntos_acumulados"]

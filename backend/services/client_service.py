@@ -52,6 +52,14 @@ def create_client(nombre, telefono, rfc, correo, fecha_nacimiento, ciudad="Guada
     try:
         connection = get_connection()
         with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id_cliente FROM Clientes WHERE UPPER(BTRIM(rfc)) = %s;",
+                (rfc,)
+            )
+            if cursor.fetchone():
+                print(f"[Error al registrar cliente]: El RFC '{rfc}' ya esta registrado.")
+                return False
+
             query = """
                 INSERT INTO Clientes (
                     nombre, telefono, rfc, correo, fecha_nacimiento, puntos_acumulados, ciudad, estado

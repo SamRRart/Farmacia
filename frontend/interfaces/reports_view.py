@@ -31,6 +31,7 @@ class ReportsView(ctk.CTkFrame):
         self._current_rows = []     # Lista de dicts retornados por report_service
         self._current_kpis = {}     # Resumen de KPIs del reporte activo
         self._current_headers = []  # Cabeceras de la tabla activa
+        self._current_col_keys = []
 
         # Layout principal
         self.grid_rowconfigure(2, weight=1)
@@ -256,6 +257,7 @@ class ReportsView(ctk.CTkFrame):
 
         # Limpiar tabla al cambiar de tipo
         self._clear_table()
+        self._reset_report_state()
         self.lbl_status.configure(text="Seleccione los parametros y presione 'Generar Reporte'.")
 
     def generate_report(self):
@@ -278,6 +280,7 @@ class ReportsView(ctk.CTkFrame):
 
         self.lbl_status.configure(text="Consultando base de datos...")
         self.update_idletasks()
+        self._reset_report_state()
 
         try:
             if tipo == "Clientes por Ciudad / Estado":
@@ -337,9 +340,13 @@ class ReportsView(ctk.CTkFrame):
             count = kpis.get("total_registros", len(rows_data))
             self.lbl_status.configure(text=f"Reporte generado: {count} registro(s) encontrado(s).")
 
+        except ValueError as e:
+            messagebox.showerror("Parametro Invalido", str(e))
+            self.lbl_status.configure(text="Error: parametro invalido.")
         except Exception as e:
             messagebox.showerror("Error al Generar Reporte", f"Ocurrio un error al consultar los datos:\n{e}")
             self.lbl_status.configure(text="Error al generar el reporte.")
+            self._reset_report_state()
 
     def export_to_pdf(self):
         """Exporta el reporte activo a un archivo PDF con membrete institucional."""
@@ -409,6 +416,13 @@ class ReportsView(ctk.CTkFrame):
     def _clear_table(self):
         """Limpia todos los registros visibles de la tabla."""
         self.tree_report.delete(*self.tree_report.get_children())
+
+    def _reset_report_state(self):
+        self._current_rows = []
+        self._current_kpis = {}
+        self._current_headers = []
+        self._current_col_keys = []
+        self._render_kpis({})
 
     def _configure_columns(self, headers: list, widths: list):
         """Reconfigura columnas y encabezados de la tabla Treeview."""

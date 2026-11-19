@@ -200,6 +200,11 @@ def delete_user(id_usuario: int, creator_role: str = "Admin") -> tuple[bool, str
             if not user:
                 return False, "El usuario a eliminar no existe."
 
+            if user[0].lower() == "admin":
+                cursor.execute("SELECT COUNT(*) FROM Usuarios WHERE LOWER(perfil) = 'admin';")
+                if cursor.fetchone()[0] <= 1:
+                    return False, "No se puede eliminar al unico administrador del sistema."
+
             cursor.execute("DELETE FROM Usuarios WHERE id_usuario = %s;", (id_usuario,))
             connection.commit()
             return True, f"Usuario '{user[1]}' eliminado correctamente."

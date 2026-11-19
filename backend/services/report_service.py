@@ -6,7 +6,7 @@ formal de reportes ejecutivos en formato PDF utilizando ReportLab.
 
 import os
 import re
-from datetime import datetime, date
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 
 from reportlab.lib.pagesizes import letter, landscape
@@ -20,9 +20,9 @@ from backend.database.connection import get_connection
 def parse_date_boundary(date_str: Optional[str], is_end: bool = False) -> Optional[str]:
     """
     Normaliza y valida un string de fecha en formato YYYY-MM-DD.
-    Para fecha inicial anade '00:00:00'.
-    Para fecha final anade '23:59:59' para incluir todo el dia.
-    Retorna None si la cadena esta vacia o es invalida.
+    Para fecha inicial retorna el comienzo del dia.
+    Para fecha final retorna el comienzo del dia siguiente, como limite exclusivo.
+    Retorna None si la cadena esta vacia y lanza ValueError si no es una fecha valida.
     """
     if not date_str or not str(date_str).strip():
         return None
@@ -36,15 +36,26 @@ def parse_date_boundary(date_str: Optional[str], is_end: bool = False) -> Option
             day, month, year = match_alt.groups()
             clean_str = f"{year}-{int(month):02d}-{int(day):02d}"
         else:
-            return None
+            raise ValueError(f"Fecha invalida: '{clean_str}'. Use YYYY-MM-DD o DD/MM/YYYY.")
 
     try:
         dt = datetime.strptime(clean_str, "%Y-%m-%d")
         if is_end:
-            return dt.strftime("%Y-%m-%d 23:59:59")
+            dt += timedelta(days=1)
         return dt.strftime("%Y-%m-%d 00:00:00")
-    except ValueError:
-        return None
+    except ValueError as error:
+        raise ValueError(f"Fecha invalida: '{clean_str}'. Use una fecha real.") from error
+
+
+def _parse_date_range(
+    fecha_inicio: Optional[str],
+    fecha_fin: Optional[str]
+) -> Tuple[Optional[str], Optional[str]]:
+    f_ini = parse_date_boundary(fecha_inicio)
+    f_fin = parse_date_boundary(fecha_fin, is_end=True)
+    if f_ini and f_fin and f_ini >= f_fin:
+        raise ValueError("La fecha de inicio debe ser anterior o igual a la fecha final.")
+    return f_ini, f_fin
 
 def get_clients_by_location(
     filtro: Optional[str] = None, 
@@ -142,6 +153,7 @@ def get_sales_by_date_range(
     
     Retorna: (lista_de_ventas, resumen_kpis)
     """
+    f_ini, f_fin = _parse_date_range(fecha_inicio, fecha_fin)
     connection = None
     try:
         connection = get_connection()
@@ -162,14 +174,12 @@ def get_sales_by_date_range(
             """
             params: List[Any] = []
 
-            f_ini = parse_date_boundary(fecha_inicio, is_end=False)
             if f_ini:
                 query += " AND v.fecha_hora >= %s"
                 params.append(f_ini)
 
-            f_fin = parse_date_boundary(fecha_fin, is_end=True)
             if f_fin:
-                query += " AND v.fecha_hora <= %s"
+                query += " AND v.fecha_hora < %s"
                 params.append(f_fin)
 
             query += " ORDER BY v.fecha_hora DESC;"
@@ -228,6 +238,7 @@ def get_purchases_by_date_range(
     
     Retorna: (lista_de_compras, resumen_kpis)
     """
+    f_ini, f_fin = _parse_date_range(fecha_inicio, fecha_fin)
     connection = None
     try:
         connection = get_connection()
@@ -247,14 +258,12 @@ def get_purchases_by_date_range(
             """
             params: List[Any] = []
 
-            f_ini = parse_date_boundary(fecha_inicio, is_end=False)
             if f_ini:
                 query += " AND c.fecha_hora >= %s"
                 params.append(f_ini)
 
-            f_fin = parse_date_boundary(fecha_fin, is_end=True)
             if f_fin:
-                query += " AND c.fecha_hora <= %s"
+                query += " AND c.fecha_hora < %s"
                 params.append(f_fin)
 
             query += " ORDER BY c.fecha_hora DESC;"

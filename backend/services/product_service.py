@@ -155,9 +155,17 @@ def generate_default_folio(categoria: str, cursor) -> str:
     cat_upper = (categoria or "GEN").upper().strip()
     prefix = cat_upper[:3] if len(cat_upper) >= 3 else cat_upper.ljust(3, "X")
 
-    cursor.execute("SELECT COUNT(*) FROM Productos WHERE folio LIKE %s;", (f"{prefix}-%",))
-    count = cursor.fetchone()[0] + 1
-    return f"{prefix}-{count:03d}"
+    cursor.execute(
+        "SELECT folio FROM Productos WHERE UPPER(LEFT(folio, %s)) = %s;",
+        (len(prefix), prefix)
+    )
+    existing_folios = cursor.fetchall()
+    max_number = 0
+    for (existing_folio,) in existing_folios:
+        suffix = existing_folio[len(prefix):]
+        if suffix.startswith("-") and suffix[1:].isdigit():
+            max_number = max(max_number, int(suffix[1:]))
+    return f"{prefix}-{max_number + 1:03d}"
 
 def get_providers_list() -> list:
     """Retorna una lista de proveedores (id_proveedor, razon_social) para llenar listas desplegables."""
@@ -217,6 +225,9 @@ def create_product(
     if stock < 0:
         return False, "El stock inicial no puede ser negativo."
 
+    if id_proveedor is None:
+        return False, "Debe seleccionar un proveedor para el producto."
+
     connection = None
     try:
         connection = get_connection()
@@ -226,16 +237,14 @@ def create_product(
                 folio = generate_default_folio(categoria, cursor)
             else:
                 folio = folio.strip()
-                # Validar que el folio no este duplicado
-                cursor.execute("SELECT id_producto FROM Productos WHERE LOWER(folio) = LOWER(%s);", (folio,))
-                if cursor.fetchone():
-                    return False, f"El folio '{folio}' ya pertenece a otro producto registrado."
 
-            # Validar proveedor si se especifico
-            if id_proveedor is not None:
-                cursor.execute("SELECT id_proveedor FROM Proveedores WHERE id_proveedor = %s;", (id_proveedor,))
-                if not cursor.fetchone():
-                    id_proveedor = None
+            cursor.execute("SELECT id_producto FROM Productos WHERE LOWER(folio) = LOWER(%s);", (folio,))
+            if cursor.fetchone():
+                return False, f"El folio '{folio}' ya pertenece a otro producto registrado."
+
+            cursor.execute("SELECT id_proveedor FROM Proveedores WHERE id_proveedor = %s;", (id_proveedor,))
+            if not cursor.fetchone():
+                return False, "El proveedor seleccionado no existe."
 
             query = """
                 INSERT INTO Productos (
@@ -265,6 +274,42 @@ def create_product(
             connection.rollback()
         print(f"[Error al registrar producto]: {e}")
         return False, f"Error en la base de datos: {e}"
+    finally:
+        if connection:
+            connection.close()
+
+def assign_product_provider(
+    id_producto: int,
+    id_proveedor: int,
+    creator_role: str = "Admin"
+) -> tuple[bool, str]:
+    """Asigna un proveedor a un producto existente."""
+    if creator_role not in ["Admin", "Gerente"]:
+        return False, "Permiso denegado: Solo el Administrador y el Gerente pueden modificar productos."
+
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id_producto FROM Productos WHERE id_producto = %s;", (id_producto,))
+            if not cursor.fetchone():
+                return False, "El producto seleccionado ya no existe."
+
+            cursor.execute("SELECT id_proveedor FROM Proveedores WHERE id_proveedor = %s;", (id_proveedor,))
+            if not cursor.fetchone():
+                return False, "El proveedor seleccionado no existe."
+
+            cursor.execute(
+                "UPDATE Productos SET id_proveedor = %s WHERE id_producto = %s;",
+                (id_proveedor, id_producto)
+            )
+            connection.commit()
+            return True, "Proveedor asignado correctamente al producto."
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print(f"[Error al asignar proveedor al producto {id_producto}]: {e}")
+        return False, f"Error al asignar proveedor: {e}"
     finally:
         if connection:
             connection.close()

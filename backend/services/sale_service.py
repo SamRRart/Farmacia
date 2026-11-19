@@ -30,7 +30,13 @@ def get_client_by_rfc(rfc: str):
                 WHERE LOWER(rfc) = LOWER(%s);
             """
             cursor.execute(query, (rfc.strip(),))
-            row = cursor.fetchone()
+            rows = cursor.fetchall()
+            if len(rows) > 1:
+                raise ValueError(
+                    f"Hay varios clientes registrados con el RFC '{rfc.strip()}'. "
+                    "Corrija los duplicados antes de procesar la venta."
+                )
+            row = rows[0] if rows else None
             if row:
                 return {
                     "id_cliente": row[0],
@@ -44,6 +50,8 @@ def get_client_by_rfc(rfc: str):
                     "estado": row[8]
                 }
             return None
+    except ValueError:
+        raise
     except Exception as e:
         print(f"[Error al consultar cliente por RFC]: {e}")
         return None

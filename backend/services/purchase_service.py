@@ -137,6 +137,55 @@ def get_purchase_details(id_compra: int) -> list:
         if connection:
             connection.close()
 
+def get_purchase_notification_data(id_compra: int) -> tuple[bool, str, dict]:
+    """Obtiene el proveedor y el detalle necesarios para notificar una orden."""
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT p.razon_social, p.correo, c.total_compra
+                FROM Compras c
+                JOIN Proveedores p ON c.id_proveedor = p.id_proveedor
+                WHERE c.id_compra = %s;
+            """, (id_compra,))
+            purchase = cursor.fetchone()
+            if not purchase:
+                return False, f"No se encontraron los datos del proveedor para la orden #{id_compra}.", {}
+
+            cursor.execute("""
+                SELECT p.nombre, dc.cantidad, dc.precio_compra_unitario, dc.subtotal
+                FROM Detalle_Compras dc
+                JOIN Productos p ON dc.id_producto = p.id_producto
+                WHERE dc.id_compra = %s
+                ORDER BY dc.id_detalle_compra ASC;
+            """, (id_compra,))
+            rows = cursor.fetchall()
+            if not rows:
+                return False, f"La orden #{id_compra} no tiene productos para notificar.", {}
+
+            return True, "", {
+                "provider_email": purchase[1] or "",
+                "provider_name": purchase[0],
+                "order_id": id_compra,
+                "items_list": [
+                    {
+                        "nombre": row[0],
+                        "cantidad": row[1],
+                        "precio_compra_unitario": float(row[2]),
+                        "subtotal": float(row[3])
+                    }
+                    for row in rows
+                ],
+                "total_amount": float(purchase[2] or 0)
+            }
+    except Exception as e:
+        print(f"[Error al preparar notificacion de compra #{id_compra}]: {e}")
+        return False, f"No se pudo preparar el correo de la orden #{id_compra}: {e}", {}
+    finally:
+        if connection:
+            connection.close()
+
 def create_restock_orders(items_list: list, id_usuario: int, creator_role: str = "Gerente") -> tuple[bool, str, list]:
     """
     Procesa la solicitud de reabastecimiento (Restock):
@@ -170,24 +219,27 @@ def create_restock_orders(items_list: list, id_usuario: int, creator_role: str =
             grouped_by_provider = {}
             for item in items_list:
                 id_prod = item.get("id_producto")
-                cant = int(item.get("cantidad", 1))
+                try:
+                    cant = int(item.get("cantidad", 1))
+                except (TypeError, ValueError):
+                    return False, "La cantidad de cada producto debe ser un entero positivo.", []
                 if cant <= 0:
-                    continue
+                    return False, "La cantidad de cada producto debe ser un entero positivo.", []
 
                 cursor.execute("SELECT id_producto, id_proveedor, nombre, precio_compra FROM Productos WHERE id_producto = %s;", (id_prod,))
                 prod_row = cursor.fetchone()
                 if not prod_row:
-                    continue
+                    return False, f"El producto con ID {id_prod} ya no existe en el catalogo.", []
 
                 prod_id, id_prov, prod_nombre, db_p_compra = prod_row
                 p_compra = float(item.get("precio_compra_unitario", db_p_compra))
                 subtotal = round(cant * p_compra, 2)
 
-                # Si el producto no tiene proveedor asignado, asignar al primer proveedor existente o 1
                 if not id_prov:
-                    cursor.execute("SELECT id_proveedor FROM Proveedores ORDER BY id_proveedor ASC LIMIT 1;")
-                    first_prov = cursor.fetchone()
-                    id_prov = first_prov[0] if first_prov else 1
+                    return False, (
+                        f"El producto '{prod_nombre}' no tiene proveedor asignado. "
+                        "Asigne un proveedor al producto antes de solicitar el restock."
+                    ), []
 
                 if id_prov not in grouped_by_provider:
                     grouped_by_provider[id_prov] = []

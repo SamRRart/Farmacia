@@ -35,9 +35,8 @@ def send_invoice_email(
     if not os.path.exists(pdf_path):
         return False, f"El archivo PDF de factura no fue encontrado en: {pdf_path}"
 
-    cfg = get_smtp_config()
-
     try:
+        cfg = get_smtp_config()
         msg = MIMEMultipart()
         msg["From"] = cfg["sender"]
         msg["To"] = to_email
@@ -82,8 +81,11 @@ def send_invoice_email(
 
         # Si no estan configuradas las credenciales SMTP en .env, registrar el intento
         if not cfg["user"] or not cfg["password"]:
-            print(f"[Aviso SMTP]: Credenciales SMTP no configuradas en .env. Se simula envio exitoso a {to_email}.")
-            return True, f"Conexion a internet verificada. Envio simulado exitosamente a {to_email}."
+            message = (
+                f"No se envio la factura a {to_email}: faltan las credenciales SMTP."
+            )
+            print(f"[Aviso SMTP]: {message}")
+            return False, message
 
         # Envio real por SMTP
         with smtplib.SMTP(cfg["server"], cfg["port"], timeout=10) as server:
@@ -114,9 +116,8 @@ def send_restock_order_email(
     if not provider_email or "@" not in provider_email:
         return False, "El proveedor no cuenta con una direccion de correo valida."
 
-    cfg = get_smtp_config()
-
     try:
+        cfg = get_smtp_config()
         msg = MIMEMultipart()
         msg["From"] = cfg["sender"]
         msg["To"] = provider_email
@@ -162,8 +163,12 @@ def send_restock_order_email(
         msg.attach(MIMEText(body_html, "html"))
 
         if not cfg["user"] or not cfg["password"]:
-            print(f"[Aviso SMTP]: Envio de orden #{order_id} simulado hacia proveedor {provider_email}.")
-            return True, f"Notificacion enviada exitosamente a {provider_name} ({provider_email})."
+            message = (
+                f"No se envio la orden #{order_id}: faltan las credenciales SMTP para "
+                f"notificar a {provider_name} ({provider_email})."
+            )
+            print(f"[Aviso SMTP]: {message}")
+            return False, message
 
         with smtplib.SMTP(cfg["server"], cfg["port"], timeout=10) as server:
             server.starttls()
